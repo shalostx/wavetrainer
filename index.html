@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Тренажёр гос. волны — GTA5RP</title>
+<title>WaveTrainer</title>
+<link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/9138/9138332.png">
 <style>
   :root{
     --bg: #17140f;
@@ -172,12 +173,19 @@
 
   /* ---- Channel / messages ---- */
   .channel-head{
-    display:flex; align-items:center; gap:8px;
+    display:flex; align-items:center; gap:7px;
     color: var(--muted); font-size:13px; font-weight:600;
     padding-bottom:12px; margin-bottom:6px; border-bottom:1px solid var(--border);
     flex-shrink:0;
   }
-  .channel-head .hash{ color: var(--muted-2); font-weight:700; }
+  .channel-head .hash{ color: var(--muted-2); font-weight:700; font-size:15px; }
+  .channel-head .channel-icon{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:18px; height:18px; border-radius:5px;
+    background: linear-gradient(135deg, #ec4faa, #b93fd6);
+    font-size:10px; flex-shrink:0;
+  }
+  .channel-head .channel-sep{ color: var(--muted-2); }
 
   #messages{
     flex:1;
@@ -193,26 +201,24 @@
   .msg{
     display:flex; gap:12px;
     padding: 10px 0;
+    align-items:flex-start;
   }
   .msg + .msg{ border-top: 1px solid #2a251b; }
   .avatar{
     width:38px; height:38px; border-radius:50%;
     display:flex; align-items:center; justify-content:center;
-    font-size:13px; font-weight:700; color:#000;
+    font-size:13px; font-weight:700; color:#fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,.4);
     flex-shrink:0;
   }
   .msg-body{ flex:1; min-width:0; }
-  .msg-line1{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-  .msg-name{ font-weight:600; font-size:14px; }
-  .badge{
-    font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px;
-    background:#1c1c21; border:1px solid var(--border); color: var(--muted);
+  .msg-header{
+    display:flex; align-items:center; gap:7px; flex-wrap:wrap;
+    margin-bottom:3px;
   }
-  .badge.status-pending{ color:#111; }
-  .msg-sub{ color: var(--muted); font-size:13px; margin-top:2px; }
-  .msg-time{
-    font-variant-numeric: tabular-nums; font-weight:700; font-size:14px; margin-top:2px;
-  }
+  .msg-username{ font-weight:700; font-size:14px; }
+  .msg-content{ color: var(--muted); font-size:13.5px; line-height:1.55; }
+  .msg-content .msg-time{ font-weight:700; font-variant-numeric: tabular-nums; color: var(--text); }
   .empty-note{ color: var(--muted); font-size:13px; padding:8px 0; }
 
   /* ---- Prompt / answer ---- */
@@ -308,9 +314,9 @@
 
   <!-- SCREEN 1: faction select -->
   <div class="view" id="screen-select">
-    <p class="eyebrow">GTA5RP BlackBerry · Тренажёр</p>
-    <h1>Тренажёр гос. волны</h1>
-    <p class="subtitle">Отработка очереди на подачу гос. новостей в Discord</p>
+    <p class="eyebrow">GTA5RP</p>
+    <h1>WaveTrainer</h1>
+    <p class="subtitle">Тренажёр очереди на подачу гос. новостей в Discord</p>
     <div class="card">
       <div class="group-title"><span class="idx">01</span> Силовые структуры <span class="rule"></span></div>
       <div class="faction-grid" id="grid-basic"></div>
@@ -338,7 +344,7 @@
         <ol>
           <li>Занять волну можно заранее — минимум за 5 минут и максимум за 60 минут до подачи.</li>
           <li>Интервал между волнами разных фракций — минимум 10 минут (на один 10-минутный слот приходится одна волна).</li>
-          <li>Минимальный интервал между волнами одной и той же фракции — 20 минут. Все департаменты GOV (Деп. Культуры, USSS, СВ, АП) считаются одной фракцией и делят общий интервал в 20 минут между собой.</li>
+          <li>Минимальный интервал между волнами одной и той же фракции — 20 минут. Все департаменты GOV (Департамент Культуры, USSS, Судебная власть, Аппарат Правительства) считаются одной фракцией и делят общий интервал в 20 минут между собой.</li>
           <li>Нельзя занимать 2 волны подряд «на опережение» от одной гос. структуры — сначала должна выполниться текущая. Исключение — департаменты GOV: каждый департамент отдельно может держать свою волну в очереди (но не более одной волны на департамент одновременно, и с учётом общего интервала 20 минут для всего GOV).</li>
           <li>Занимать волну можно только на отметки 00, 10, 20, 30, 40, 50 минут (24-часовой формат).</li>
         </ol>
@@ -346,12 +352,17 @@
     </div>
 
     <div class="card messages-card">
-      <div class="channel-head"><span class="hash">#</span> 📢| занятие-гос-волны</div>
+      <div class="channel-head">
+        <span class="hash">#</span>
+        <span class="channel-icon">🔊</span>
+        <span class="channel-sep">|</span>
+        <span>занятие-гос-волны</span>
+      </div>
       <div id="messages"></div>
     </div>
 
     <div class="card">
-      <p class="prompt">Когда ваша фракция (<b id="prompt-faction"></b>) сможет в <u>ближайшее время</u> занять гос. волну?</p>
+      <p class="prompt">Когда ваша фракция (<b id="prompt-faction"></b>) сможет <u>в ближайшее время</u> занять гос. волну?</p>
       <div class="time-grid" id="time-grid"></div>
       <button class="impossible-btn" id="btn-impossible">Сейчас занять гос. волну нельзя</button>
     </div>
@@ -377,27 +388,37 @@
     "Walker","Young","Allen","King","Wright","Scott","Torres","Nguyen","Hill","Flores",
     "Green","Adams","Nelson","Baker","Hall","Rivera","Campbell","Mitchell","Carter","Roberts"];
 
-  const STRUCTS = ["LSPD","LSSD","FIB","SANG","SASPA","GOV_CULT","GOV_USSS","GOV_SV","GOV_AP"];
+  const STRUCTS = ["LSPD","LSSD","FIB","SANG","SASPA","EMS","GOV_CULT","GOV_USSS","GOV_SV","GOV_AP"];
 
+  // STRUCT_LABEL: full composite label (used in "Ваша фракция", the "Фракция" line in messages, rules text)
   const STRUCT_LABEL = {
-    LSPD:"LSPD", LSSD:"LSSD", FIB:"FIB", SANG:"SANG", SASPA:"SASPA",
-    GOV_CULT:"GOV · Деп. Культуры", GOV_USSS:"GOV · USSS", GOV_SV:"GOV · СВ", GOV_AP:"GOV · АП"
+    LSPD:"LSPD", LSSD:"LSSD", FIB:"FIB", SANG:"SANG", SASPA:"SASPA", EMS:"EMS",
+    GOV_CULT:"GOV · Департамент Культуры", GOV_USSS:"GOV · USSS",
+    GOV_SV:"GOV · Судебная власть", GOV_AP:"GOV · Аппарат Правительства"
   };
+  // STRUCT_FULL: name shown on the faction-selection card (no "GOV ·" prefix — the group header already says GOV)
+  const STRUCT_FULL = {
+    LSPD:"LSPD", LSSD:"LSSD", FIB:"FIB", SANG:"SANG", SASPA:"SASPA", EMS:"EMS",
+    GOV_CULT:"Департамент Культуры", GOV_USSS:"USSS",
+    GOV_SV:"Судебная власть", GOV_AP:"Аппарат Правительства"
+  };
+  // STRUCT_SHORT: the "nickname" prefix used in Discord messages ("SHORT | Имя Фамилия")
   const STRUCT_SHORT = {
-    LSPD:"LSPD", LSSD:"LSSD", FIB:"FIB", SANG:"SANG", SASPA:"SASPA",
-    GOV_CULT:"Деп. Культуры", GOV_USSS:"USSS", GOV_SV:"СВ", GOV_AP:"АП"
+    LSPD:"LSPD", LSSD:"LSSD", FIB:"FIB", SANG:"SANG", SASPA:"SASPA", EMS:"EMS",
+    GOV_CULT:"Dep. Cult.", GOV_USSS:"Head ATD", GOV_SV:"Federal Judge", GOV_AP:"HR-M"
   };
+  // Fixed nickname colors per faction (matches the server's real role colors).
   const STRUCT_COLOR = {
-    LSPD:"#3b82f6", LSSD:"#7c6a3d", FIB:"#818cf8", SANG:"#22c55e", SASPA:"#64748b",
-    GOV_CULT:"#a78bfa", GOV_USSS:"#a78bfa", GOV_SV:"#a78bfa", GOV_AP:"#a78bfa"
+    EMS:"#FD385A", LSPD:"#5F70F0", LSSD:"#A7684E", FIB:"#000001", SANG:"#D8B252", SASPA:"#10047A",
+    GOV_CULT:"#C281B9", GOV_USSS:"#387A55", GOV_SV:"#E0B0C4", GOV_AP:"#1A7F9C"
   };
   const STRUCT_ICON = {
-    LSPD:"PD", LSSD:"SD", FIB:"FIB", SANG:"NG", SASPA:"SP",
+    LSPD:"PD", LSSD:"SD", FIB:"FIB", SANG:"NG", SASPA:"SP", EMS:"EMS",
     GOV_CULT:"ДК", GOV_USSS:"US", GOV_SV:"СВ", GOV_AP:"АП"
   };
   const STRUCT_SUB = {
     LSPD:"Полиция Лос-Сантоса", LSSD:"Департамент шерифа", FIB:"Федеральное бюро",
-    SANG:"Национальная гвардия", SASPA:"Федеральная тюрьма",
+    SANG:"Национальная гвардия", SASPA:"Федеральная тюрьма", EMS:"Медицинская служба",
     GOV_CULT:"Департамент GOV", GOV_USSS:"Департамент GOV",
     GOV_SV:"Департамент GOV", GOV_AP:"Департамент GOV"
   };
@@ -408,7 +429,25 @@
     return `rgba(${r},${g},${b},${alpha})`;
   }
 
-  const BASIC_STRUCTS = ["LSPD","LSSD","FIB","SANG","SASPA"];
+  // Random (but per-user consistent) avatar gradients, independent of faction color.
+  const AVATAR_PALETTE = [
+    ["#ff6b6b","#f06595"], ["#4dabf7","#3b5bdb"], ["#69db7c","#2f9e44"],
+    ["#ffa94d","#e8590c"], ["#9775fa","#6741d9"], ["#63e6be","#0ca678"],
+    ["#ffd43b","#f08c00"], ["#e599f7","#9c36b5"], ["#748ffc","#3b5bdb"],
+    ["#ff8787","#c92a2a"], ["#66d9e8","#0c8599"], ["#b2f2bb","#2b8a3e"],
+    ["#ffc9de","#d6336c"], ["#a5d8ff","#1971c2"], ["#ffe066","#f59f00"]
+  ];
+  function hashStr(str){
+    let h = 0;
+    for(let i=0;i<str.length;i++){ h = (h*31 + str.charCodeAt(i)) | 0; }
+    return Math.abs(h);
+  }
+  function avatarGradient(seed){
+    const pair = AVATAR_PALETTE[hashStr(seed) % AVATAR_PALETTE.length];
+    return `linear-gradient(135deg, ${pair[0]}, ${pair[1]})`;
+  }
+
+  const BASIC_STRUCTS = ["LSPD","LSSD","FIB","SANG","SASPA","EMS"];
   const GOV_STRUCTS = ["GOV_CULT","GOV_USSS","GOV_SV","GOV_AP"];
 
   // For the 20-minute "same faction" interval, all GOV departments share one combined
@@ -546,7 +585,7 @@
     return `
       <span class="icon-tile" style="background:${hexToRgba(c,.14)};border-color:${hexToRgba(c,.4)};color:${c}">${STRUCT_ICON[s]}</span>
       <span class="faction-btn-text">
-        <span class="faction-btn-title">${STRUCT_SHORT[s]}</span>
+        <span class="faction-btn-title">${STRUCT_FULL[s]}</span>
         <span class="faction-btn-sub">${STRUCT_SUB[s]}</span>
       </span>`;
   }
@@ -587,16 +626,22 @@
       return;
     }
     state.messages.forEach(m=>{
+      const c = STRUCT_COLOR[m.structure];
+      const fullName = `${m.name.first} ${m.name.last}`;
       const row = document.createElement("div");
       row.className = "msg";
       row.innerHTML = `
-        <div class="avatar" style="background:${STRUCT_COLOR[m.structure]}">${initials(m.name)}</div>
+        <div class="avatar" style="background:${avatarGradient(fullName+m.time)};box-shadow:inset 0 0 0 2px ${hexToRgba(c,.9)}">${initials(m.name)}</div>
         <div class="msg-body">
-          <div class="msg-line1">
-            <span class="msg-name">${m.name.first} ${m.name.last}</span>
+          <div class="msg-header">
+            <span class="msg-username" style="color:${c}">${STRUCT_SHORT[m.structure]} | ${fullName}</span>
           </div>
-          <div class="msg-sub">${STRUCT_LABEL[m.structure]} · Собеседование</div>
-          <div class="msg-time" style="color:${STRUCT_COLOR[m.structure]}">${fmt(m.time)}</div>
+          <div class="msg-content">
+            <div>${fullName}</div>
+            <div>${STRUCT_LABEL[m.structure]}</div>
+            <div>Собеседование</div>
+            <div class="msg-time">${fmt(m.time)}</div>
+          </div>
         </div>`;
       wrap.appendChild(row);
     });
