@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Тренажёр гос. волны — GTA5RP</title>
+<style>
+  :root{
+    --bg: #17140f;
+    --bg-2: #1c1811;
+    --panel: #1c1913;
+    --panel-2: #221e17;
+    --border: #332c20;
+    --text: #f4f0e8;
+    --muted: #a89a80;
+    --muted-2: #766a55;
+    --accent: #f97316;
+    --accent-2: #fb923c;
+    --accent-dim: rgba(249,115,22,.14);
+    --good: #22c55e;
+    --bad: #ef4444;
+    --c-lspd: #3b82f6;
+    --c-lssd: #b45309;
+    --c-fib: #818cf8;
+    --c-sang: #22c55e;
+    --c-saspa: #64748b;
+    --c-gov: #a78bfa;
+    --radius: 14px;
+    --dot: rgba(244,240,232,.05);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  html{ height:100%; }
+  body{
+    background-color: var(--bg);
+    background-image:
+      radial-gradient(var(--dot) 1.4px, transparent 1.4px);
+    background-size: 22px 22px;
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    height: 100vh;
+    height: 100dvh;
+    overflow:hidden;
+    display:flex;
+    justify-content:center;
+  }
+  .wrap{
+    width:100%; max-width: 720px; height:100%;
+    display:flex; flex-direction:column;
+    padding: 24px 16px;
+    overflow:hidden;
+    transition: padding-bottom .15s;
+  }
+  .wrap.has-feedback{ padding-bottom: 176px; }
+
+  .view{ min-height:0; }
+  #screen-select.view{ flex:1; overflow-y:auto; }
+  #screen-trainer.view{ flex:1; display:flex; flex-direction:column; overflow:hidden; }
+
+  .eyebrow{
+    font-size:11px; font-weight:700; color: var(--accent);
+    text-transform:uppercase; letter-spacing:.14em; margin:0 0 8px; flex-shrink:0;
+  }
+  h1{ font-size: 20px; font-weight:700; margin:0 0 4px; letter-spacing:-0.01em; flex-shrink:0; }
+  .subtitle{ color: var(--muted); font-size: 13px; margin: 0 0 28px; flex-shrink:0; }
+
+  .card{
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    margin-bottom: 16px;
+    flex-shrink:0;
+  }
+  .card.messages-card{
+    flex:1;
+    min-height:0;
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    padding-bottom:10px;
+  }
+
+  /* ---- Faction select screen ---- */
+  .group-title{
+    display:flex; align-items:center; gap:10px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    font-weight:700;
+    color: var(--text);
+    margin: 22px 0 12px;
+  }
+  .group-title:first-of-type{ margin-top:0; }
+  .group-title .idx{ color: var(--accent); font-variant-numeric: tabular-nums; }
+  .group-title .rule{ flex:1; height:1px; background: linear-gradient(90deg, var(--border), transparent); }
+  .faction-grid{
+    display:grid;
+    grid-template-columns: repeat(auto-fill, minmax(190px,1fr));
+    gap:10px;
+  }
+  .faction-btn{
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight:500;
+    cursor:pointer;
+    text-align:left;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    transition: border-color .15s, transform .1s, background .15s;
+  }
+  .faction-btn:hover{ border-color: var(--accent); background:#241f16; }
+  .faction-btn:active{ transform: scale(0.98); }
+  .icon-tile{
+    width:40px; height:40px; border-radius:9px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center;
+    font-size:11px; font-weight:800; letter-spacing:.02em;
+    border:1px solid;
+  }
+  .faction-btn-text{ display:flex; flex-direction:column; min-width:0; }
+  .faction-btn-title{ font-weight:700; font-size:14px; color: var(--text); }
+  .faction-btn-sub{ font-weight:400; font-size:12px; color: var(--muted); margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  /* ---- Trainer header ---- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom: 18px;
+  }
+  .my-faction{
+    display:flex; align-items:center; gap:10px;
+    font-size:14px; color: var(--muted);
+  }
+  .my-faction b{ color: var(--text); font-weight:600; }
+  .link-btn{
+    background:none; border:none; color: var(--muted); font-size:13px;
+    cursor:pointer; text-decoration: underline; text-underline-offset: 3px;
+    padding:4px;
+  }
+  .link-btn:hover{ color: var(--accent); }
+
+  .clock{
+    display:flex; align-items:baseline; justify-content:space-between;
+    margin-bottom: 4px;
+  }
+  .clock .label{ font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.08em; }
+  .clock .time{ font-size: 34px; font-weight:700; letter-spacing:-0.02em; font-variant-numeric: tabular-nums; color: var(--accent-2); }
+
+  .rules-toggle{
+    font-size:12px; color: var(--muted); cursor:pointer; user-select:none;
+    display:inline-flex; align-items:center; gap:6px; margin-top:8px;
+  }
+  .rules-toggle:hover{ color: var(--accent-2); }
+  .rules-panel{
+    display:none;
+    margin-top:12px;
+    padding-top:12px;
+    border-top: 1px solid var(--border);
+    font-size: 13px;
+    color: var(--muted);
+    line-height:1.6;
+  }
+  .rules-panel.open{ display:block; }
+  .rules-panel ol{ margin:0; padding-left: 18px; }
+  .rules-panel li{ margin-bottom:6px; }
+
+  /* ---- Channel / messages ---- */
+  .channel-head{
+    display:flex; align-items:center; gap:8px;
+    color: var(--muted); font-size:13px; font-weight:600;
+    padding-bottom:12px; margin-bottom:6px; border-bottom:1px solid var(--border);
+    flex-shrink:0;
+  }
+  .channel-head .hash{ color: var(--muted-2); font-weight:700; }
+
+  #messages{
+    flex:1;
+    min-height:0;
+    overflow-y:auto;
+    padding-right:6px;
+  }
+  #messages::-webkit-scrollbar{ width:8px; }
+  #messages::-webkit-scrollbar-track{ background:transparent; }
+  #messages::-webkit-scrollbar-thumb{ background:#3a3325; border-radius:8px; }
+  #messages::-webkit-scrollbar-thumb:hover{ background:#4a4130; }
+
+  .msg{
+    display:flex; gap:12px;
+    padding: 10px 0;
+  }
+  .msg + .msg{ border-top: 1px solid #2a251b; }
+  .avatar{
+    width:38px; height:38px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:13px; font-weight:700; color:#000;
+    flex-shrink:0;
+  }
+  .msg-body{ flex:1; min-width:0; }
+  .msg-line1{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .msg-name{ font-weight:600; font-size:14px; }
+  .badge{
+    font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px;
+    background:#1c1c21; border:1px solid var(--border); color: var(--muted);
+  }
+  .badge.status-pending{ color:#111; }
+  .msg-sub{ color: var(--muted); font-size:13px; margin-top:2px; }
+  .msg-time{
+    font-variant-numeric: tabular-nums; font-weight:700; font-size:14px; margin-top:2px;
+  }
+  .empty-note{ color: var(--muted); font-size:13px; padding:8px 0; }
+
+  /* ---- Prompt / answer ---- */
+  .prompt{ font-size:15px; margin: 0 0 14px; }
+  .prompt b{ font-weight:600; }
+  .time-grid{
+    display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px;
+  }
+  .time-btn{
+    background: var(--panel-2);
+    border:1px solid var(--border);
+    color: var(--text);
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size:15px;
+    font-weight:600;
+    font-variant-numeric: tabular-nums;
+    cursor:pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .time-btn:hover:not(:disabled){ border-color: var(--accent); background:#241f16; }
+  .time-btn:disabled{ opacity:.4; cursor:default; }
+  .impossible-btn{
+    width:100%;
+    background: var(--panel-2);
+    border:1px dashed var(--border);
+    color: var(--muted);
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size:14px;
+    font-weight:600;
+    cursor:pointer;
+    margin-top:4px;
+    transition: border-color .15s, color .15s;
+  }
+  .impossible-btn:hover:not(:disabled){ border-color:#ef4444; color:#f2a5a5; }
+  .impossible-btn:disabled{ opacity:.4; cursor:default; }
+
+  .time-btn.pick-correct{ background: rgba(34,197,94,.15); border-color: var(--good); }
+  .time-btn.pick-wrong{ background: rgba(239,68,68,.15); border-color: var(--bad); }
+
+  /* ---- Feedback (fixed so it never requires scrolling) ---- */
+  #feedback-wrap{
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    display: flex;
+    justify-content: center;
+    padding: 16px;
+    z-index: 1000;
+    pointer-events: none;
+  }
+  #feedback-wrap .feedback{ pointer-events: auto; width:100%; max-width: 688px; }
+  .feedback{
+    border-radius: var(--radius);
+    padding: 18px 20px;
+    border: 1px solid;
+    background: #1c1913;
+    box-shadow: 0 16px 40px rgba(0,0,0,.55), 0 2px 10px rgba(0,0,0,.5);
+    animation: fb-in .18s ease-out;
+  }
+  @keyframes fb-in{ from{ opacity:0; transform: translateY(10px); } to{ opacity:1; transform: translateY(0); } }
+  .feedback.correct{ border-color: rgba(34,197,94,.5); background-color:#141c11; }
+  .feedback.wrong{ border-color: rgba(239,68,68,.5); background-color:#1f1310; }
+  .feedback .fb-title{ font-size:15px; font-weight:700; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
+  .feedback.correct .fb-title{ color: var(--good); }
+  .feedback.wrong .fb-title{ color: var(--bad); }
+  .feedback .fb-detail{ font-size:14px; color: var(--text); opacity:.9; line-height:1.5; }
+
+  .controls-row{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:14px;
+  }
+  .primary-btn{
+    background: var(--accent);
+    border:none;
+    color:#1a0f00;
+    padding: 11px 22px;
+    border-radius: 10px;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    box-shadow: 0 4px 14px rgba(249,115,22,.25);
+  }
+  .primary-btn:hover{ background: var(--accent-2); }
+  .countdown{ font-size:13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .footer-note{ text-align:center; color: var(--muted-2); font-size:12px; margin-top:24px; }
+
+  ::selection{ background: var(--accent); color:#fff; }
+</style>
+</head>
+<body>
+<div class="wrap" id="wrap">
+
+  <!-- SCREEN 1: faction select -->
+  <div class="view" id="screen-select">
+    <p class="eyebrow">GTA5RP BlackBerry · Тренажёр</p>
+    <h1>Тренажёр гос. волны</h1>
+    <p class="subtitle">Отработка очереди на подачу гос. новостей в Discord</p>
+    <div class="card">
+      <div class="group-title"><span class="idx">01</span> Силовые структуры <span class="rule"></span></div>
+      <div class="faction-grid" id="grid-basic"></div>
+      <div class="group-title"><span class="idx">02</span> Правительство (GOV) <span class="rule"></span></div>
+      <div class="faction-grid" id="grid-gov"></div>
+    </div>
+    <p class="footer-note">Тренажёр очереди гос. волны · только для отработки правил · by @Shalostx</p>
+  </div>
+
+  <!-- SCREEN 2: trainer -->
+  <div class="view" id="screen-trainer" style="display:none;">
+
+    <div class="topbar">
+      <div class="my-faction">Ваша фракция: <b id="my-faction-label"></b></div>
+      <button class="link-btn" id="btn-change-faction">Сменить фракцию</button>
+    </div>
+
+    <div class="card">
+      <div class="clock">
+        <span class="label">Текущее время</span>
+        <span class="time" id="now-display">00:00</span>
+      </div>
+      <div class="rules-toggle" id="rules-toggle">▸ Правила занятия гос. волны</div>
+      <div class="rules-panel" id="rules-panel">
+        <ol>
+          <li>Занять волну можно заранее — минимум за 5 минут и максимум за 60 минут до подачи.</li>
+          <li>Интервал между волнами разных фракций — минимум 10 минут (на один 10-минутный слот приходится одна волна).</li>
+          <li>Минимальный интервал между волнами одной и той же фракции — 20 минут. Все департаменты GOV (Деп. Культуры, USSS, СВ, АП) считаются одной фракцией и делят общий интервал в 20 минут между собой.</li>
+          <li>Нельзя занимать 2 волны подряд «на опережение» от одной гос. структуры — сначала должна выполниться текущая. Исключение — департаменты GOV: каждый департамент отдельно может держать свою волну в очереди (но не более одной волны на департамент одновременно, и с учётом общего интервала 20 минут для всего GOV).</li>
+          <li>Занимать волну можно только на отметки 00, 10, 20, 30, 40, 50 минут (24-часовой формат).</li>
+        </ol>
+      </div>
+    </div>
+
+    <div class="card messages-card">
+      <div class="channel-head"><span class="hash">#</span> 📢| занятие-гос-волны</div>
+      <div id="messages"></div>
+    </div>
+
+    <div class="card">
+      <p class="prompt">Когда ваша фракция (<b id="prompt-faction"></b>) сможет в <u>ближайшее время</u> занять гос. волну?</p>
+      <div class="time-grid" id="time-grid"></div>
+      <button class="impossible-btn" id="btn-impossible">Сейчас занять гос. волну нельзя</button>
+    </div>
+
+  </div>
+
+  <div id="feedback-wrap"></div>
+</div>
+
+<script>
+(function(){
+
+  const FIRST_NAMES = ["James","Michael","Robert","John","David","William","Richard","Joseph","Thomas","Charles",
+    "Christopher","Daniel","Matthew","Anthony","Mark","Steven","Andrew","Paul","Joshua","Kevin",
+    "Brian","George","Edward","Ronald","Jason","Jeffrey","Ryan","Jacob","Gary","Nicholas",
+    "Eric","Stephen","Jonathan","Larry","Justin","Scott","Brandon","Benjamin","Samuel","Gregory",
+    "Frank","Raymond","Alexander","Patrick","Jack","Dennis","Jerry","Tyler","Aaron","Henry",
+    "Emily","Jessica","Sarah","Ashley","Amanda","Melissa","Michelle","Kimberly","Lisa","Angela",
+    "Laura","Rebecca","Stephanie","Nicole","Elizabeth","Heather","Christina","Amy","Megan","Rachel","Victoria","Samantha"];
+  const LAST_NAMES = ["Smith","Johnson","Williams","Brown","Jones","Garcia","Miller","Davis","Rodriguez","Martinez",
+    "Hernandez","Lopez","Gonzalez","Wilson","Anderson","Thomas","Taylor","Moore","Jackson","Martin",
+    "Lee","Perez","Thompson","White","Harris","Sanchez","Clark","Ramirez","Lewis","Robinson",
+    "Walker","Young","Allen","King","Wright","Scott","Torres","Nguyen","Hill","Flores",
+    "Green","Adams","Nelson","Baker","Hall","Rivera","Campbell","Mitchell","Carter","Roberts"];
+
+  const STRUCTS = ["LSPD","LSSD","FIB","SANG","SASPA","GOV_CULT","GOV_USSS","GOV_SV","GOV_AP"];
+
+  const STRUCT_LABEL = {
+    LSPD:"LSPD", LSSD:"LSSD", FIB:"FIB", SANG:"SANG", SASPA:"SASPA",
+    GOV_CULT:"GOV · Деп. Культуры", GOV_USSS:"GOV · USSS", GOV_SV:"GOV · СВ", GOV_AP:"GOV · АП"
+  };
+  const STRUCT_SHORT = {
+    LSPD:"LSPD", LSSD:"LSSD", FIB:"FIB", SANG:"SANG", SASPA:"SASPA",
+    GOV_CULT:"Деп. Культуры", GOV_USSS:"USSS", GOV_SV:"СВ", GOV_AP:"АП"
+  };
+  const STRUCT_COLOR = {
+    LSPD:"#3b82f6", LSSD:"#7c6a3d", FIB:"#818cf8", SANG:"#22c55e", SASPA:"#64748b",
+    GOV_CULT:"#a78bfa", GOV_USSS:"#a78bfa", GOV_SV:"#a78bfa", GOV_AP:"#a78bfa"
+  };
+  const STRUCT_ICON = {
+    LSPD:"PD", LSSD:"SD", FIB:"FIB", SANG:"NG", SASPA:"SP",
+    GOV_CULT:"ДК", GOV_USSS:"US", GOV_SV:"СВ", GOV_AP:"АП"
+  };
+  const STRUCT_SUB = {
+    LSPD:"Полиция Лос-Сантоса", LSSD:"Департамент шерифа", FIB:"Федеральное бюро",
+    SANG:"Национальная гвардия", SASPA:"Федеральная тюрьма",
+    GOV_CULT:"Департамент GOV", GOV_USSS:"Департамент GOV",
+    GOV_SV:"Департамент GOV", GOV_AP:"Департамент GOV"
+  };
+
+  function hexToRgba(hex, alpha){
+    const h = hex.replace('#','');
+    const r = parseInt(h.substring(0,2),16), g = parseInt(h.substring(2,4),16), b = parseInt(h.substring(4,6),16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+
+  const BASIC_STRUCTS = ["LSPD","LSSD","FIB","SANG","SASPA"];
+  const GOV_STRUCTS = ["GOV_CULT","GOV_USSS","GOV_SV","GOV_AP"];
+
+  // For the 20-minute "same faction" interval, all GOV departments share one combined
+  // timeline (treated as a single structure "GOV"). For the "no 2 waves ahead" rule,
+  // each GOV department is still tracked independently (that's the actual exception).
+  function groupKey(structure){ return structure.startsWith("GOV_") ? "GOV" : structure; }
+
+  // ---------- helpers ----------
+  function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function randomName(){ return { first: rand(FIRST_NAMES), last: rand(LAST_NAMES) }; }
+  function initials(n){ return (n.first[0]+n.last[0]).toUpperCase(); }
+  function ceilToGrid(t){ return Math.ceil(t/10)*10; }
+  function fmt(t){
+    let m = ((t % 1440) + 1440) % 1440;
+    let hh = Math.floor(m/60), mm = m%60;
+    return String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0');
+  }
+  function shuffle(a){
+    for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; }
+    return a;
+  }
+
+  // ---------- state ----------
+  const state = {
+    userFaction: null,
+    nowAbs: 0,
+    messages: [],
+    answer: null,
+    countdownTimer: null,
+    countdownVal: 0,
+    answered: false
+  };
+
+  // ---------- scenario generation ----------
+  function generateScenario(){
+    let messages, tries = 0;
+    do{
+      const nowAbs = Math.floor(Math.random()*24*60);
+      const start = ceilToGrid(nowAbs - 50);
+      const end = nowAbs + 50;
+      const lastTimeByGroup = {};
+      const futurePending = {};
+      const msgs = [];
+      for(let t = start; t <= end; t += 10){
+        if(Math.random() < 0.55){
+          const eligible = STRUCTS.filter(s=>{
+            const g = groupKey(s);
+            if(lastTimeByGroup[g] !== undefined && (t - lastTimeByGroup[g]) < 20) return false;
+            if(t > nowAbs && futurePending[s]) return false;
+            return true;
+          });
+          if(eligible.length === 0) continue;
+          const s = rand(eligible);
+          msgs.push({ structure: s, time: t, name: randomName() });
+          lastTimeByGroup[groupKey(s)] = t;
+          if(t > nowAbs) futurePending[s] = true;
+        }
+      }
+      messages = msgs;
+      state._candNowAbs = nowAbs;
+      tries++;
+      if(tries > 60) break;
+    } while(messages.length < 3);
+
+    return { nowAbs: state._candNowAbs, messages: messages.sort((a,b)=>a.time-b.time) };
+  }
+
+  // ---------- rule engine ----------
+  function computeAnswer(nowAbs, messages, faction){
+    const group = groupKey(faction);
+    const future = messages.filter(m=>m.time > nowAbs);
+
+    const ownFuture = future.find(m=>m.structure===faction);
+    if(ownFuture){
+      return {
+        possible:false,
+        reason:`Ваша структура (${STRUCT_LABEL[faction]}) уже заняла ближайшую гос. волну на ${fmt(ownFuture.time)} — занимать вторую волну подряд нельзя, пока первая не будет выполнена.`
+      };
+    }
+
+    const windowStart = ceilToGrid(nowAbs + 5);
+    const windowEnd = nowAbs + 60;
+    const occupiedFuture = new Set(future.map(m=>m.time));
+    const groupNeighbors = messages.filter(m=>groupKey(m.structure)===group);
+
+    for(let t = windowStart; t <= windowEnd; t += 10){
+      if(occupiedFuture.has(t)) continue;
+      const tooClose = groupNeighbors.some(m => Math.abs(t - m.time) < 20);
+      if(tooClose) continue;
+      return { possible:true, time:t };
+    }
+    return { possible:false, reason:"В допустимом окне (от 5 до 60 минут вперёд) нет свободного времени с учётом правил интервалов." };
+  }
+
+  function explainClicked(t, nowAbs, messages, faction){
+    const group = groupKey(faction);
+    const windowStart = ceilToGrid(nowAbs + 5);
+    const windowEnd = nowAbs + 60;
+    const future = messages.filter(m=>m.time > nowAbs);
+    const groupNeighbors = messages.filter(m=>groupKey(m.structure)===group);
+
+    if(t < windowStart) return `Слишком рано: занимать волну можно минимум за 5 минут до подачи (не раньше ${fmt(windowStart)}).`;
+    if(t > windowEnd) return `Слишком поздно: занимать волну можно максимум за 60 минут вперёд (не позже ${fmt(windowEnd)}).`;
+    const occ = future.find(m=>m.time===t);
+    if(occ) return `Это время уже занято фракцией ${STRUCT_LABEL[occ.structure]}.`;
+    const near = groupNeighbors.filter(m => Math.abs(t - m.time) < 20).sort((a,b)=>Math.abs(t-a.time)-Math.abs(t-b.time))[0];
+    if(near){
+      const groupLabel = group === "GOV" ? "GOV (департаменты считаются одной фракцией)" : STRUCT_LABEL[faction];
+      return `${groupLabel} уже занимал(а) волну в ${fmt(near.time)} — минимальный интервал между волнами одной фракции 20 минут.`;
+    }
+    return null;
+  }
+
+  function validateAnswer(clicked){
+    const { nowAbs, messages, userFaction, answer } = state;
+    if(clicked === "impossible"){
+      if(!answer.possible) return { correct:true, title:"Верно! Сейчас занять гос. волну нельзя.", detail: answer.reason };
+      return { correct:false, title:"Неверно.", detail:`На самом деле ближайшее доступное время — ${fmt(answer.time)}.` };
+    }
+    const t = clicked;
+    if(!answer.possible){
+      return { correct:false, title:"Неверно.", detail: answer.reason + " Правильный ответ в этой ситуации — «Сейчас занять гос. волну нельзя»." };
+    }
+    if(t === answer.time){
+      return { correct:true, title:"Верно! Это ближайшее доступное время.", detail:"" };
+    }
+    const reason = explainClicked(t, nowAbs, messages, userFaction);
+    if(reason) return { correct:false, title:"Неверно.", detail: reason };
+    return { correct:false, title:"Неверно.", detail:`Формально это время свободно, но это не ближайшее доступное время. Ближайшее — ${fmt(answer.time)}.` };
+  }
+
+  // ---------- rendering ----------
+  function factionButtonHTML(s){
+    const c = STRUCT_COLOR[s];
+    return `
+      <span class="icon-tile" style="background:${hexToRgba(c,.14)};border-color:${hexToRgba(c,.4)};color:${c}">${STRUCT_ICON[s]}</span>
+      <span class="faction-btn-text">
+        <span class="faction-btn-title">${STRUCT_SHORT[s]}</span>
+        <span class="faction-btn-sub">${STRUCT_SUB[s]}</span>
+      </span>`;
+  }
+
+  function buildFactionGrids(){
+    const gridBasic = document.getElementById("grid-basic");
+    const gridGov = document.getElementById("grid-gov");
+    BASIC_STRUCTS.forEach(s=>{
+      const b = document.createElement("button");
+      b.className = "faction-btn";
+      b.innerHTML = factionButtonHTML(s);
+      b.onclick = ()=> selectFaction(s);
+      gridBasic.appendChild(b);
+    });
+    GOV_STRUCTS.forEach(s=>{
+      const b = document.createElement("button");
+      b.className = "faction-btn";
+      b.innerHTML = factionButtonHTML(s);
+      b.onclick = ()=> selectFaction(s);
+      gridGov.appendChild(b);
+    });
+  }
+
+  function selectFaction(s){
+    state.userFaction = s;
+    document.getElementById("screen-select").style.display = "none";
+    document.getElementById("screen-trainer").style.display = "flex";
+    document.getElementById("my-faction-label").textContent = STRUCT_LABEL[s];
+    document.getElementById("prompt-faction").textContent = STRUCT_LABEL[s];
+    newRound();
+  }
+
+  function renderMessages(){
+    const wrap = document.getElementById("messages");
+    wrap.innerHTML = "";
+    if(state.messages.length === 0){
+      wrap.innerHTML = `<div class="empty-note">Сообщений пока нет — канал свободен.</div>`;
+      return;
+    }
+    state.messages.forEach(m=>{
+      const row = document.createElement("div");
+      row.className = "msg";
+      row.innerHTML = `
+        <div class="avatar" style="background:${STRUCT_COLOR[m.structure]}">${initials(m.name)}</div>
+        <div class="msg-body">
+          <div class="msg-line1">
+            <span class="msg-name">${m.name.first} ${m.name.last}</span>
+          </div>
+          <div class="msg-sub">${STRUCT_LABEL[m.structure]} · Собеседование</div>
+          <div class="msg-time" style="color:${STRUCT_COLOR[m.structure]}">${fmt(m.time)}</div>
+        </div>`;
+      wrap.appendChild(row);
+    });
+  }
+
+  function renderTimeGrid(){
+    const grid = document.getElementById("time-grid");
+    grid.innerHTML = "";
+    const nowAbs = state.nowAbs;
+    let times = [];
+    for(let t = ceilToGrid(nowAbs+1); t <= nowAbs+80; t += 10) times.push(t);
+    times = times.slice(0,7);
+    if(state.answer.possible && !times.includes(state.answer.time) && state.answer.time <= nowAbs+90){
+      times.push(state.answer.time);
+    }
+    times = [...new Set(times)];
+    shuffle(times);
+    state.renderedTimes = times;
+
+    times.forEach(t=>{
+      const b = document.createElement("button");
+      b.className = "time-btn";
+      b.textContent = fmt(t);
+      b.dataset.time = t;
+      b.onclick = ()=> onAnswer(t, b);
+      grid.appendChild(b);
+    });
+  }
+
+  function renderNow(){
+    document.getElementById("now-display").textContent = fmt(state.nowAbs);
+  }
+
+  function clearFeedback(){
+    document.getElementById("feedback-wrap").innerHTML = "";
+    document.getElementById("wrap").classList.remove("has-feedback");
+  }
+
+  function newRound(){
+    stopCountdown();
+    clearFeedback();
+    state.answered = false;
+
+    const scenario = generateScenario();
+    state.nowAbs = scenario.nowAbs;
+    state.messages = scenario.messages;
+    state.answer = computeAnswer(state.nowAbs, state.messages, state.userFaction);
+
+    renderNow();
+    renderMessages();
+    renderTimeGrid();
+
+    document.getElementById("btn-impossible").disabled = false;
+    document.querySelectorAll(".time-btn").forEach(b=> b.disabled = false);
+  }
+
+  function onAnswer(clicked, btnEl){
+    if(state.answered) return;
+    state.answered = true;
+
+    const result = validateAnswer(clicked);
+
+    document.querySelectorAll(".time-btn").forEach(b=> b.disabled = true);
+    document.getElementById("btn-impossible").disabled = true;
+
+    if(clicked !== "impossible" && btnEl){
+      btnEl.classList.add(result.correct ? "pick-correct" : "pick-wrong");
+    }
+    if(!result.correct && state.answer.possible){
+      document.querySelectorAll(".time-btn").forEach(b=>{
+        if(parseInt(b.dataset.time,10) === state.answer.time) b.classList.add("pick-correct");
+      });
+    }
+
+    showFeedback(result);
+  }
+
+  function showFeedback(result){
+    const wrap = document.getElementById("feedback-wrap");
+    document.getElementById("wrap").classList.add("has-feedback");
+    const cls = result.correct ? "correct" : "wrong";
+    const icon = result.correct ? "✓" : "✕";
+    wrap.innerHTML = `
+      <div class="feedback ${cls}">
+        <div class="fb-title">${icon} ${result.title}</div>
+        ${result.detail ? `<div class="fb-detail">${result.detail}</div>` : ""}
+        <div class="controls-row">
+          <button class="primary-btn" id="btn-retry">Заново</button>
+          <span class="countdown" id="countdown-label"></span>
+        </div>
+      </div>`;
+    document.getElementById("btn-retry").onclick = ()=> newRound();
+
+    if(result.correct){
+      startCountdown();
+    }
+  }
+
+  function startCountdown(){
+    state.countdownVal = 5;
+    const label = document.getElementById("countdown-label");
+    if(label) label.textContent = `Новая ситуация через ${state.countdownVal}с`;
+    state.countdownTimer = setInterval(()=>{
+      state.countdownVal--;
+      const l = document.getElementById("countdown-label");
+      if(l) l.textContent = state.countdownVal > 0 ? `Новая ситуация через ${state.countdownVal}с` : "";
+      if(state.countdownVal <= 0){
+        stopCountdown();
+        newRound();
+      }
+    }, 1000);
+  }
+
+  function stopCountdown(){
+    if(state.countdownTimer){ clearInterval(state.countdownTimer); state.countdownTimer = null; }
+  }
+
+  // ---------- init ----------
+  buildFactionGrids();
+
+  document.getElementById("rules-toggle").onclick = ()=>{
+    const p = document.getElementById("rules-panel");
+    const open = p.classList.toggle("open");
+    document.getElementById("rules-toggle").textContent = (open ? "▾ " : "▸ ") + "Правила занятия гос. волны";
+  };
+
+  document.getElementById("btn-change-faction").onclick = ()=>{
+    stopCountdown();
+    document.getElementById("screen-trainer").style.display = "none";
+    document.getElementById("screen-select").style.display = "block";
+  };
+
+  document.getElementById("btn-impossible").onclick = ()=> onAnswer("impossible", null);
+
+})();
+</script>
+</body>
+</html>
