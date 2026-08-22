@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>WaveTrainer</title>
-<link rel="icon" type="image/png" href="https://cdn-icons-png.flaticon.com/512/9138/9138332.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2064%2064%22%3E%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2214%22%20fill%3D%22%23f97316%22/%3E%3Ctext%20x%3D%2232%22%20y%3D%2243%22%20font-family%3D%22Arial%2C%20Helvetica%2C%20sans-serif%22%20font-size%3D%2225%22%20font-weight%3D%22800%22%20fill%3D%22%2317140f%22%20text-anchor%3D%22middle%22%3EWT%3C/text%3E%3C/svg%3E">
 <style>
   :root{
     --bg: #17140f;
@@ -132,7 +132,28 @@
     display:flex;
     align-items:center;
     justify-content:space-between;
-    margin-bottom: 18px;
+    margin-bottom: 14px;
+    flex-shrink:0;
+  }
+  .stats-row{
+    display:flex; gap:10px;
+    margin-bottom:16px;
+    flex-shrink:0;
+  }
+  .stat-chip{
+    flex:1;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    display:flex; align-items:baseline; gap:8px;
+  }
+  .stat-chip .stat-value{
+    font-size:19px; font-weight:700; color: var(--accent-2);
+    font-variant-numeric: tabular-nums;
+  }
+  .stat-chip .stat-label{
+    font-size:11px; color: var(--muted); text-transform:uppercase; letter-spacing:.05em;
   }
   .my-faction{
     display:flex; align-items:center; gap:10px;
@@ -323,7 +344,7 @@
       <div class="group-title"><span class="idx">02</span> Правительство (GOV) <span class="rule"></span></div>
       <div class="faction-grid" id="grid-gov"></div>
     </div>
-    <p class="footer-note">Тренажёр очереди гос. волны · только для отработки правил · by @Shalostx</p>
+    <p class="footer-note">Тренажёр очереди гос. волны · только для отработки правил · <span id="easter-egg">by @Shalostx</span></p>
   </div>
 
   <!-- SCREEN 2: trainer -->
@@ -332,6 +353,17 @@
     <div class="topbar">
       <div class="my-faction">Ваша фракция: <b id="my-faction-label"></b></div>
       <button class="link-btn" id="btn-change-faction">Сменить фракцию</button>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-chip">
+        <span class="stat-value" id="stat-count">0</span>
+        <span class="stat-label">пройдено ситуаций</span>
+      </div>
+      <div class="stat-chip">
+        <span class="stat-value" id="stat-avg">—</span>
+        <span class="stat-label">средний балл</span>
+      </div>
     </div>
 
     <div class="card">
@@ -447,6 +479,41 @@
     return `linear-gradient(135deg, ${pair[0]}, ${pair[1]})`;
   }
 
+  // ---------- sound feedback (synthesized, no external audio files) ----------
+  let audioCtx = null;
+  function getAudioCtx(){
+    try{
+      if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if(audioCtx.state === "suspended") audioCtx.resume();
+      return audioCtx;
+    }catch(e){ return null; }
+  }
+  function playTone(notes, type){
+    const ctx = getAudioCtx();
+    if(!ctx) return;
+    let t = ctx.currentTime;
+    notes.forEach(([freq, dur])=>{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = type;
+      osc.frequency.setValueAtTime(freq, t);
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(0.22, t + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(t);
+      osc.stop(t + dur + 0.02);
+      t += dur * 0.62;
+    });
+  }
+  function playCorrectSound(){
+    playTone([[659,0.11],[988,0.16]], "sine");
+  }
+  function playWrongSound(){
+    playTone([[220,0.16],[164,0.22]], "square");
+  }
+
   const BASIC_STRUCTS = ["LSPD","LSSD","FIB","SANG","SASPA","EMS"];
   const GOV_STRUCTS = ["GOV_CULT","GOV_USSS","GOV_SV","GOV_AP"];
 
@@ -478,8 +545,26 @@
     answer: null,
     countdownTimer: null,
     countdownVal: 0,
-    answered: false
+    answered: false,
+    stats: { count: 0, points: 0 }
   };
+
+  // Each answer is graded on the Russian 5-point school scale: 5 for correct, 2 for wrong.
+  const GRADE_CORRECT = 5;
+  const GRADE_WRONG = 2;
+
+  function resetStats(){
+    state.stats.count = 0;
+    state.stats.points = 0;
+    updateStatsDisplay();
+  }
+  function updateStatsDisplay(){
+    const countEl = document.getElementById("stat-count");
+    const avgEl = document.getElementById("stat-avg");
+    if(!countEl || !avgEl) return;
+    countEl.textContent = state.stats.count;
+    avgEl.textContent = state.stats.count === 0 ? "—" : (state.stats.points / state.stats.count).toFixed(1);
+  }
 
   // ---------- scenario generation ----------
   function generateScenario(){
@@ -615,6 +700,7 @@
     document.getElementById("screen-trainer").style.display = "flex";
     document.getElementById("my-faction-label").textContent = STRUCT_LABEL[s];
     document.getElementById("prompt-faction").textContent = STRUCT_LABEL[s];
+    resetStats();
     newRound();
   }
 
@@ -704,6 +790,10 @@
 
     const result = validateAnswer(clicked);
 
+    state.stats.count++;
+    state.stats.points += result.correct ? GRADE_CORRECT : GRADE_WRONG;
+    updateStatsDisplay();
+
     document.querySelectorAll(".time-btn").forEach(b=> b.disabled = true);
     document.getElementById("btn-impossible").disabled = true;
 
@@ -715,6 +805,8 @@
         if(parseInt(b.dataset.time,10) === state.answer.time) b.classList.add("pick-correct");
       });
     }
+
+    if(result.correct) playCorrectSound(); else playWrongSound();
 
     showFeedback(result);
   }
@@ -775,6 +867,17 @@
   };
 
   document.getElementById("btn-impossible").onclick = ()=> onAnswer("impossible", null);
+
+  // Easter egg — plays a sound when clicked, appearance stays untouched.
+  const easterEggEl = document.getElementById("easter-egg");
+  if(easterEggEl){
+    easterEggEl.addEventListener("click", ()=>{
+      try{
+        const audio = new Audio("https://www.myinstants.com/media/sounds/dexter-meme.mp3");
+        audio.play().catch(()=>{});
+      }catch(e){}
+    });
+  }
 
 })();
 </script>
